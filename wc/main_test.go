@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"testing"
 )
+
+const testFile = "./testdata/words_test.txt"
 
 func TestCountWords(t *testing.T) {
 	b := bytes.NewBufferString("word1 word2 word3 word4\n")
@@ -34,4 +37,34 @@ func TestCountBytes(t *testing.T) {
 	if res != exp {
 		t.Errorf("Expected %d, but got %d instead.\n", exp, res)
 	}
+}
+
+func TestCountLinesFromFile(t *testing.T) {
+
+	file, err := os.Open(testFile)
+	if err != nil {
+		t.Errorf("Could not open test file")
+	}
+	exp := 4
+
+	res := count(file, true, false)
+	if res != exp {
+		t.Errorf("Expected %d, but got  %d instead.\n", exp, res)
+	}
+
+}
+func TestCountBytesFromFile(t *testing.T) {
+
+	file, err := os.Open(testFile)
+	if err != nil {
+		t.Errorf("Could not open test file")
+	}
+	s := "hello\nworld\nhello\nworld"
+	exp := len(s)
+
+	res := count(file, false, true)
+	if res != exp {
+		t.Errorf("Expected %d, but got  %d instead.\n", exp, res)
+	}
+
 }
