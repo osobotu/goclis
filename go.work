@@ -2,6 +2,8 @@ go 1.19
 
 use (
 	./mdp
+	./quiz
 	./todo
+	./walk
 	./wc
 )
