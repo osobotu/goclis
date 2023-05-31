@@ -4,6 +4,7 @@ use (
 	./mdp
 	./project_box
 	./quiz
+	./roman_server
 	./todo
 	./walk
 	./wc
