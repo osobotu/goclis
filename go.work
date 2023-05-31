@@ -2,8 +2,10 @@ go 1.19
 
 use (
 	./mdp
+	./project_box
 	./quiz
 	./todo
 	./walk
 	./wc
+	./web_service_gin
 )

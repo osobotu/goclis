@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 )
@@ -17,7 +16,7 @@ func main() {
 
 	// ! flags
 	quizFilename := flag.String("file", "", "Quiz file name")
-	save := flag.String("save", "", "save saves quiz result to this file")
+	// save := flag.String("save", "", "save saves quiz result to this file")
 	flag.Parse()
 
 	// ! get user inputted filename
@@ -28,29 +27,40 @@ func main() {
 	}
 	fmt.Println(filePath)
 
-	err := run(filePath, *save)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// err := run(filePath, *save)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
+	names := []string{"Suraj", "Steve"}
+	fmt.Println("Original:", names)
+	for i := range names {
+		fmt.Println(i)
+		names[i] = strings.ToUpper(names[i])
+		fmt.Println(names[i])
+	}
+	fmt.Println("New:", names)
 }
 
 // TODO: modify the quiz to take multiple files
 // TODO: modify quiz to log results to output file
 // TODO: modify quiz to include a timer that defaults to 30secs but can be override.
 
+func check(err error) error {
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func run(filePath, outFilename string) error {
 	// ! open a csv file
 	openFile, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
+	check(err)
 
 	// ! read file content
 	fileData, err := csv.NewReader(openFile).ReadAll()
-	if err != nil {
-		return err
-	}
+	check(err)
 
 	// ! parse file content
 	numberOfQuestions := len(fileData)
