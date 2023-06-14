@@ -70,7 +70,6 @@ func (scq SingleChoiceQuiz) Read(fileData [][]string) []Questioner {
 	var examItems []Questioner
 	for i := range fileData {
 		questionAnswerPair := fileData[i]
-		fmt.Println(questionAnswerPair)
 
 		item := SingleChoiceQuestion{
 			Question: questionAnswerPair[0],
@@ -91,7 +90,6 @@ func (mcq MultipleChoiceQuiz) Read(fileData [][]string) []Questioner {
 	var examItems []Questioner
 	for i := range fileData {
 		questionAnswerPair := fileData[i]
-		fmt.Println(questionAnswerPair[2])
 
 		item := MultipleChoiceQuestion{
 			Question: questionAnswerPair[0],
