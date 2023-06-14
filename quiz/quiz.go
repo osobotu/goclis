@@ -5,46 +5,139 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
-type QuestionItem struct {
+type Questioner interface {
+	Ask()
+	Check(choice string) bool
+}
+
+type SingleChoiceQuestion struct {
 	Question string
 	Answer   string
 }
+
+func (q SingleChoiceQuestion) Ask() {
+	fmt.Println(q.Question)
+}
+
+func (q SingleChoiceQuestion) Check(choice string) bool {
+	return q.Answer == cleanUpString(choice)
+}
+
+type MultipleChoiceQuestion struct {
+	Question string
+	Answer   string
+	Options  []string
+}
+
+func (q MultipleChoiceQuestion) Ask() {
+	fmt.Println("Question:", q.Question)
+	for i := range q.Options {
+		fmt.Println(i, q.Options[i])
+	}
+	fmt.Println("Enter answer value")
+}
+
+func (q MultipleChoiceQuestion) Check(choice string) bool {
+	return q.Answer == cleanUpString(choice)
+}
+
 type Quiz struct {
-	Creator string
-	Items   []QuestionItem
-	Result  Score
+	Creator     string
+	Items       []Questioner
+	TimeAllowed time.Duration
+	Result      Score
 }
 
 type Score int
 
-func createQuizFromFile(filePath, creatorName string) Quiz {
-	// open csv file
-	file, err := os.Open(filePath)
-	check(err)
+type Quizzer interface {
+	Read(fileData [][]string) []Questioner
+}
 
-	// read file content
-	fileData, err := csv.NewReader(file).ReadAll()
-	check(err)
+type SingleChoiceQuiz struct {
+	Creator     string
+	Items       []Questioner
+	TimeAllowed time.Duration
+	Result      Score
+}
 
-	// parse file content to create a quiz
-	var examItems []QuestionItem
+func (scq SingleChoiceQuiz) Read(fileData [][]string) []Questioner {
+
+	// parse file content return slice of [Questioner]
+	var examItems []Questioner
 	for i := range fileData {
 		questionAnswerPair := fileData[i]
+		fmt.Println(questionAnswerPair)
 
-		item := QuestionItem{
+		item := SingleChoiceQuestion{
 			Question: questionAnswerPair[0],
 			Answer:   cleanUpString(questionAnswerPair[1]),
 		}
 
 		examItems = append(examItems, item)
 	}
+	return examItems
+
+}
+
+type MultipleChoiceQuiz struct{}
+
+func (mcq MultipleChoiceQuiz) Read(fileData [][]string) []Questioner {
+
+	// parse file content return slice of [Questioner]
+	var examItems []Questioner
+	for i := range fileData {
+		questionAnswerPair := fileData[i]
+		fmt.Println(questionAnswerPair[2])
+
+		item := MultipleChoiceQuestion{
+			Question: questionAnswerPair[0],
+			Answer:   cleanUpString(questionAnswerPair[1]),
+			Options: []string{
+				// TODO: randomize the options
+				cleanUpString(questionAnswerPair[2]),
+				cleanUpString(questionAnswerPair[1]),
+				cleanUpString(questionAnswerPair[3]),
+				cleanUpString(questionAnswerPair[4]),
+			},
+		}
+
+		examItems = append(examItems, item)
+	}
+	return examItems
+
+}
+
+func createQuizFromFile(filePath, creatorName, timeAllowed string, quizType Quizzer) Quiz {
+	// open csv file
+	file, err := os.Open(filePath)
+	check(err)
+
+	// close file
+	defer file.Close()
+
+	// read file content
+	fileData, err := csv.NewReader(file).ReadAll()
+	check(err)
+
+	// read fileData and get questions
+	examItems := quizType.Read(fileData)
+
+	// assign allocated time or set to default (30secs)
+	quizDuration := time.Duration(30)
+	if timeAllowed != "" {
+		quizDuration, err = time.ParseDuration(timeAllowed)
+		check(err)
+	}
 
 	return Quiz{
-		Creator: creatorName,
-		Items:   examItems,
-		Result:  0,
+		Creator:     creatorName,
+		Items:       examItems,
+		Result:      0,
+		TimeAllowed: quizDuration,
 	}
 
 }
@@ -54,7 +147,8 @@ func (q *Quiz) Run() {
 	fmt.Println("Exam created by: ", q.Creator)
 
 	for _, item := range q.Items {
-		fmt.Println(item.Question)
+		// fmt.Println(item.Question)
+		item.Ask()
 
 		// get user answer
 		var givenAnswer string
@@ -62,7 +156,7 @@ func (q *Quiz) Run() {
 
 		// compare with correct answer
 		givenAnswer = cleanUpString(givenAnswer)
-		if givenAnswer == item.Answer {
+		if item.Check(givenAnswer) {
 			result += 1
 		}
 
@@ -83,6 +177,7 @@ func (q Quiz) SaveToFIle(fileName string) {
 // helpers
 func check(err error) error {
 	if err != nil {
+		fmt.Println("Error: ", err)
 		return err
 	}
 	return nil

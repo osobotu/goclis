@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -13,16 +14,25 @@ func main() {
 
 	// ! flags
 	quizFilename := flag.String("file", "", "Quiz file name to read questions from")
+	quizType := flag.String("type", "single", "Pass quiz type. 'single' for single choice. 'multiple' for multiple choice")
 	save := flag.String("save", "", "Saves quiz result to given file")
 
 	flag.Parse()
 
 	//  get user inputted filename
 	if *quizFilename != "" {
-		filePath = filepath.Join(".", filePath)
+		filePath = filepath.Join(".", *quizFilename)
 	}
 
-	exam := createQuizFromFile(filePath, "Stephen")
+	var exam Quiz
+	if strings.ToLower(*quizType) == "multiple" {
+
+		exam = createQuizFromFile(filePath, "Stephen", "30s", MultipleChoiceQuiz{})
+	} else {
+
+		exam = createQuizFromFile(filePath, "Stephen", "30s", SingleChoiceQuiz{})
+	}
+
 	exam.Run()
 
 	if *save != "" {
