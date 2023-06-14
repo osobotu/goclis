@@ -24,13 +24,13 @@ func main() {
 		filePath = filepath.Join(".", *quizFilename)
 	}
 
-	var exam Quiz
+	var exam quiz
 	if strings.ToLower(*quizType) == "multiple" {
 
-		exam = createQuizFromFile(filePath, "Stephen", "30s", MultipleChoiceQuiz{})
+		exam = createQuizFromFile(filePath, "Stephen", "30s", multipleChoiceQuiz{})
 	} else {
 
-		exam = createQuizFromFile(filePath, "Stephen", "30s", SingleChoiceQuiz{})
+		exam = createQuizFromFile(filePath, "Stephen", "30s", singleChoiceQuiz{})
 	}
 
 	exam.Run()

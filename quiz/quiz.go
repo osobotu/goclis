@@ -8,31 +8,31 @@ import (
 	"time"
 )
 
-type Questioner interface {
+type questioner interface {
 	Ask()
 	Check(choice string) bool
 }
 
-type SingleChoiceQuestion struct {
+type singleChoiceQuestion struct {
 	Question string
 	Answer   string
 }
 
-func (q SingleChoiceQuestion) Ask() {
+func (q singleChoiceQuestion) Ask() {
 	fmt.Println(q.Question)
 }
 
-func (q SingleChoiceQuestion) Check(choice string) bool {
+func (q singleChoiceQuestion) Check(choice string) bool {
 	return q.Answer == cleanUpString(choice)
 }
 
-type MultipleChoiceQuestion struct {
+type multipleChoiceQuestion struct {
 	Question string
 	Answer   string
 	Options  []string
 }
 
-func (q MultipleChoiceQuestion) Ask() {
+func (q multipleChoiceQuestion) Ask() {
 	fmt.Println("Question:", q.Question)
 	for i := range q.Options {
 		fmt.Println(i, q.Options[i])
@@ -40,38 +40,35 @@ func (q MultipleChoiceQuestion) Ask() {
 	fmt.Println("Enter answer value")
 }
 
-func (q MultipleChoiceQuestion) Check(choice string) bool {
+func (q multipleChoiceQuestion) Check(choice string) bool {
 	return q.Answer == cleanUpString(choice)
 }
 
-type Quiz struct {
+type quiz struct {
 	Creator     string
-	Items       []Questioner
+	Items       []questioner
 	TimeAllowed time.Duration
-	Result      Score
+	Result      score
 }
 
-type Score int
+type score int
 
-type Quizzer interface {
-	Read(fileData [][]string) []Questioner
+type csvResponse [][]string
+
+type quizzer interface {
+	Read(fileData csvResponse) []questioner
 }
 
-type SingleChoiceQuiz struct {
-	Creator     string
-	Items       []Questioner
-	TimeAllowed time.Duration
-	Result      Score
-}
+type singleChoiceQuiz struct{}
 
-func (scq SingleChoiceQuiz) Read(fileData [][]string) []Questioner {
+func (scq singleChoiceQuiz) Read(fileData csvResponse) []questioner {
 
-	// parse file content return slice of [Questioner]
-	var examItems []Questioner
+	// parse file content return slice of [questioner]
+	var examItems []questioner
 	for i := range fileData {
 		questionAnswerPair := fileData[i]
 
-		item := SingleChoiceQuestion{
+		item := singleChoiceQuestion{
 			Question: questionAnswerPair[0],
 			Answer:   cleanUpString(questionAnswerPair[1]),
 		}
@@ -82,16 +79,16 @@ func (scq SingleChoiceQuiz) Read(fileData [][]string) []Questioner {
 
 }
 
-type MultipleChoiceQuiz struct{}
+type multipleChoiceQuiz struct{}
 
-func (mcq MultipleChoiceQuiz) Read(fileData [][]string) []Questioner {
+func (mcq multipleChoiceQuiz) Read(fileData csvResponse) []questioner {
 
-	// parse file content return slice of [Questioner]
-	var examItems []Questioner
+	// parse file content return slice of [questioner]
+	var examItems []questioner
 	for i := range fileData {
 		questionAnswerPair := fileData[i]
 
-		item := MultipleChoiceQuestion{
+		item := multipleChoiceQuestion{
 			Question: questionAnswerPair[0],
 			Answer:   cleanUpString(questionAnswerPair[1]),
 			Options: []string{
@@ -109,7 +106,7 @@ func (mcq MultipleChoiceQuiz) Read(fileData [][]string) []Questioner {
 
 }
 
-func createQuizFromFile(filePath, creatorName, timeAllowed string, quizType Quizzer) Quiz {
+func createQuizFromFile(filePath, creatorName, timeAllowed string, quizType quizzer) quiz {
 	// open csv file
 	file, err := os.Open(filePath)
 	check(err)
@@ -131,7 +128,7 @@ func createQuizFromFile(filePath, creatorName, timeAllowed string, quizType Quiz
 		check(err)
 	}
 
-	return Quiz{
+	return quiz{
 		Creator:     creatorName,
 		Items:       examItems,
 		Result:      0,
@@ -140,8 +137,8 @@ func createQuizFromFile(filePath, creatorName, timeAllowed string, quizType Quiz
 
 }
 
-func (q *Quiz) Run() {
-	var result Score
+func (q *quiz) Run() {
+	var result score
 	fmt.Println("Exam created by: ", q.Creator)
 
 	for _, item := range q.Items {
@@ -163,11 +160,11 @@ func (q *Quiz) Run() {
 
 }
 
-func (q Quiz) DisplayResult() {
+func (q quiz) DisplayResult() {
 	fmt.Fprintf(os.Stdout, "You got %d out %d questions. \n", q.Result, len(q.Items))
 }
 
-func (q Quiz) SaveToFIle(fileName string) {
+func (q quiz) SaveToFIle(fileName string) {
 	message := fmt.Sprintf("Created by: %v\nYou got %d out of %d questions", q.Creator, q.Result, len(q.Items))
 	os.WriteFile(fileName, []byte(message), 0666)
 }
