@@ -122,7 +122,7 @@ func createQuizFromFile(filePath, creatorName, timeAllowed string, quizType quiz
 	examItems := quizType.Read(fileData)
 
 	// assign allocated time or set to default (30secs)
-	quizDuration := time.Duration(30)
+	quizDuration := time.Duration(30 * time.Second)
 	if timeAllowed != "" {
 		quizDuration, err = time.ParseDuration(timeAllowed)
 		check(err)
@@ -138,24 +138,45 @@ func createQuizFromFile(filePath, creatorName, timeAllowed string, quizType quiz
 }
 
 func (q *quiz) Run() {
+
+	// timer
+	timer := time.NewTimer(q.TimeAllowed)
+
+	message := make(chan string)
 	var result score
-	fmt.Println("Exam created by: ", q.Creator)
 
-	for _, item := range q.Items {
-		// fmt.Println(item.Question)
-		item.Ask()
+	go func() {
+		<-timer.C
+		message <- "Time up! Try again."
+	}()
 
-		// get user answer
-		var givenAnswer string
-		fmt.Scanln(&givenAnswer)
+	go func() {
+		fmt.Println("Exam created by: ", q.Creator)
+		fmt.Printf("You have %s for the quiz.\n", q.TimeAllowed)
+		for _, item := range q.Items {
+			// fmt.Println(item.Question)
+			item.Ask()
 
-		// compare with correct answer
-		givenAnswer = cleanUpString(givenAnswer)
-		if item.Check(givenAnswer) {
-			result += 1
+			// get user answer
+			var givenAnswer string
+			fmt.Scanln(&givenAnswer)
+
+			// compare with correct answer
+			givenAnswer = cleanUpString(givenAnswer)
+			if item.Check(givenAnswer) {
+				result += 1
+			}
+
 		}
+		message <- "Finished Quiz"
 
-	}
+	}()
+
+	// this statement makes the main goroutine wait for the timer goroutine and quiz goroutine.
+	// when it receives a message from either goroutines, it continues with normal program flow
+	// so the program ends either when your time is up or the questions have all been answered.
+	fmt.Println(<-message)
+
 	q.Result = result
 
 }
