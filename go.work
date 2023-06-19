@@ -1,6 +1,7 @@
 go 1.19
 
 use (
+	./concurrency
 	./mdp
 	./project_box
 	./quiz
