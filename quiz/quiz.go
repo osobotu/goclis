@@ -142,12 +142,13 @@ func (q *quiz) Run() {
 	// timer
 	timer := time.NewTimer(q.TimeAllowed)
 
-	message := make(chan string)
+	done := make(chan bool)
 	var result score
 
 	go func() {
-		<-timer.C
-		message <- "Time up! Try again."
+		_, ok := <-timer.C
+		done <- ok
+
 	}()
 
 	go func() {
@@ -168,14 +169,15 @@ func (q *quiz) Run() {
 			}
 
 		}
-		message <- "Finished Quiz"
+		done <- true
 
 	}()
 
 	// this statement makes the main goroutine wait for the timer goroutine and quiz goroutine.
 	// when it receives a message from either goroutines, it continues with normal program flow
 	// so the program ends either when your time is up or the questions have all been answered.
-	fmt.Println(<-message)
+
+	<-done
 
 	q.Result = result
 
